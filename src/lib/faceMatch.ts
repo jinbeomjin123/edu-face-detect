@@ -32,14 +32,15 @@ export function euclideanDistance(
 }
 
 /** 거리 → 유사도(%) 변환
- * d=0.0 → 100%, d=0.1 → 97%, d=0.3 → 92%, d=0.4 → 90%, d=1.0 → 0%
+ * d ≤ 0.2 → 100%, d=0.4 → 90% (기준선), d=1.0 → 0%
  */
 export function distanceToSimilarity(distance: number): number {
-  const THRESHOLD_DIST = 0.4;
-  if (distance <= THRESHOLD_DIST) {
-    return Math.round(AUTH_THRESHOLD + (THRESHOLD_DIST - distance) / THRESHOLD_DIST * (100 - AUTH_THRESHOLD));
+  if (distance <= 0.2) {
+    return 100;
+  } else if (distance <= 0.4) {
+    return Math.round(100 - (distance - 0.2) / 0.2 * 10);
   } else {
-    return Math.max(0, Math.round(AUTH_THRESHOLD * (1 - (distance - THRESHOLD_DIST) / (1 - THRESHOLD_DIST))));
+    return Math.max(0, Math.round(AUTH_THRESHOLD * (1 - (distance - 0.4) / 0.6)));
   }
 }
 
