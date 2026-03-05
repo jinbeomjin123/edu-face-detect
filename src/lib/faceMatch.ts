@@ -5,13 +5,14 @@ import type { FaceProfile } from "./faceDb";
  *
  * face-api.js 는 128차원 벡터 간 유클리디안 거리를 사용합니다.
  *   distance = 0.0  → 완전 동일 (100%)
- *   distance ≈ 0.4  → 동일인 높은 확신 (~90% 표시)
- *   distance ≈ 0.6  → 경계선 (~50% 표시)
- *   distance > 0.6  → 다른 사람
+ *   distance ≈ 0.1  → 같은 사람 (~97%)
+ *   distance ≈ 0.3  → 같은 사람 (~92%)
+ *   distance = 0.4  → 인증 경계선 (90%)
+ *   distance = 0.6  → 다른 사람 (~60%)
+ *   distance = 1.0  → 완전 다른 사람 (0%)
  *
- * similarity = clamp(0, 100,  (1 - distance) × 150 )
- *   → distance 0.40 → 90%  (인증 통과 기준)
- *   → distance 0.33 → 100%+ (상한선 100%)
+ * d ≤ 0.4: similarity = 90 + (0.4 - d) / 0.4 × 10   → [100%, 90%]
+ * d > 0.4: similarity = 90 × (1 - (d - 0.4) / 0.6)  → [90%, 0%]
  */
 
 /** 인증 통과 최소 유사도 (%) */
@@ -30,9 +31,16 @@ export function euclideanDistance(
   return Math.sqrt(sum);
 }
 
-/** 거리 → 유사도(%) 변환 */
+/** 거리 → 유사도(%) 변환
+ * d=0.0 → 100%, d=0.1 → 97%, d=0.3 → 92%, d=0.4 → 90%, d=1.0 → 0%
+ */
 export function distanceToSimilarity(distance: number): number {
-  return Math.min(100, Math.round(Math.max(0, (1 - distance) * 150)));
+  const THRESHOLD_DIST = 0.4;
+  if (distance <= THRESHOLD_DIST) {
+    return Math.round(AUTH_THRESHOLD + (THRESHOLD_DIST - distance) / THRESHOLD_DIST * (100 - AUTH_THRESHOLD));
+  } else {
+    return Math.max(0, Math.round(AUTH_THRESHOLD * (1 - (distance - THRESHOLD_DIST) / (1 - THRESHOLD_DIST))));
+  }
 }
 
 export interface MatchResult {
