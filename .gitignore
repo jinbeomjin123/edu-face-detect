@@ -10,9 +10,6 @@ out/
 .env.local
 .env.*.local
 
-# Face models (large files — run npm run models after clone)
-public/models/
-
 # Build outputs
 dist/
 
